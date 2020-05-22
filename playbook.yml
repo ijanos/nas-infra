@@ -1,0 +1,306 @@
+---
+- hosts: all
+  become: true
+  vars_files:
+    - vars/secrets.yml
+
+
+  pre_tasks:
+    - name: Fedora 31 dnf lib requires a recent Ansible
+      fail: msg="Ansible version >= 2.10.0 required, please update!"
+      when: ansible_version.full < "2.10.0"
+
+  tasks:
+    - name: Set hostname
+      hostname:
+        name: "{{ hostname }}"
+
+    - name: Set timezone
+      timezone:
+        name: "{{ timezone }}"
+
+    - name: Set up wired networking
+      nmcli:
+        conn_name: wired
+        ifname: enp2s0
+        type: ethernet
+        dhcp_client_id: "{{ hostname }}"
+        autoconnect: yes
+        state: present
+
+    # Fedora Server default install has some packages I don't need
+    - name: Remove packages
+      dnf:
+        name:
+          - mcelog # fails to start with this AMD CPU
+          - bluez
+          - realmd
+          - gtk3
+          - ModemManager
+          - clevis
+          - cockpit
+          - cockpit-system
+          - cockpit-bridge
+          - cockpit-packagekit
+          - cockpit-networkmanager
+          - cockpit-storaged
+          - rsyslog
+          - abrt
+          - fprintd
+          - unbound-libs
+          - mlocate
+          - wget
+        autoremove: yes
+        state: absent
+
+    - name: Setup N54L ethernet ring buffer size
+      template:
+        src: 90-ethringbuffer.rules.j2
+        dest: /etc/udev/rules.d/90-ethringbuffer.rules
+      notify:
+        - reload udev
+
+    - name: Eneble Repo for zerotier
+      template:
+        src: zerotier.repo.j2
+        dest: /etc/yum.repos.d/zerotier.repo
+        owner: root
+        group: root
+        mode: 0660
+
+    - name: Install packages
+      dnf:
+        name:
+          - htop
+          - python3-networkmanager # for ansible nmcli module
+          - python3-libsemanage # ansible semanage
+          - vim
+          - tmux
+          - lm_sensors
+          - hdparm
+          - mosh
+          - transmission-daemon
+          - nss-mdns
+          - avahi
+          - glances
+          - python3-bottle
+          - samba
+          - zerotier-one
+          - ncdu
+          - haveged
+          - syncthing
+
+    - name: Enable and start fstrim.timer
+      service:
+        name: fstrim.timer
+        state: started
+        enabled: yes
+
+    - name: Enable avahi service
+      service:
+        name: avahi-daemon.service
+        state: started
+        enabled: yes
+
+    - name: Start zerotier-one service
+      service:
+        name: zerotier-one
+        state: started
+        enabled: yes
+
+    # may fail if started too soon
+    # TODO change to empty file creation
+    - name: Join ZeroTier network
+      command: zerotier-cli join {{ zerotier_network_id }}
+      args:
+        creates: /var/lib/zerotier-one/networks.d/{{ zerotier_network_id }}.conf
+
+    - name: Enable avahi name resolution
+      lineinfile:
+        path: /etc/nsswitch.conf
+        regexp: '^hosts:'
+        line: "hosts: files mdns4_minimal [NOTFOUND=return] dns myhostname"
+
+    - name: Set swappiness
+      sysctl:
+        name: vm.swappiness
+        value: '10'
+        state: present
+
+    - name: Setup N54L sensors
+      template:
+        src: sensors.hp-n54l.conf.j2
+        dest: /etc/sensors.d/hp-n54l.conf
+
+    - name: Blacklist sp5100_tco # it conflicts with sensor modules
+      template:
+        src: blacklist-n54l-watchdog.conf.j2
+        dest: /etc/modprobe.d/blacklist-n54l-watchdog.conf
+
+    - name: Load sensor modules on boot
+      template:
+        src: modules-hp-n54l.conf.j2
+        dest: /etc/modules-load.d/hp-n54l.conf
+
+    - stat:
+        path: "/mnt/storage"
+        get_checksum: no
+      register: storagedir
+
+    - name: Set authorized key for user copying it from current user
+      authorized_key:
+        user: "{{ username }}"
+        state: present
+        key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_ed25519.pub') }}"
+
+    - name: Check if authorized_keys exists
+      stat:
+        path: "/home/{{ username }}/.ssh/authorized_keys"
+        get_checksum: no
+      register: authorized_keys
+
+    - name: Disable SSH password based logins
+      lineinfile:
+        dest=/etc/ssh/sshd_config
+        regexp="{{ item.regexp }}"
+        line="{{ item.line }}"
+        state=present
+      with_items:
+        - { regexp: '^#?AuthenticationMethods', line: 'AuthenticationMethods publickey' }
+        - { regexp: '^#?PasswordAuthentication', line: 'PasswordAuthentication no' }
+        - { regexp: '^#?ChallengeResponseAuthentication', line: 'ChallengeResponseAuthentication no' }
+        - { regexp: '^#?PubkeyAuthentication', line: 'PubkeyAuthentication yes'}
+      when: authorized_keys.stat.exists
+
+    - name: Add a sambda server config file
+      template:
+        src: smb.conf.j2
+        dest: /etc/samba/smb.conf
+        validate: 'testparm -s %s'
+
+    - name: Enable samba to read system directories
+      seboolean:
+        name: samba_export_all_ro
+        state: yes
+        persistent: yes
+
+    - name: Start samba service
+      service:
+        name: smb
+        state: started
+        enabled: yes
+
+    - name: Start haveged service
+      service:
+        name: haveged
+        state: started
+        enabled: yes
+
+    - name: Ensures transmission service has an override dir
+      file: path=/etc/systemd/system/transmission-daemon.service.d state=directory
+
+    - name: Modify default transmisson service settings
+      template:
+        src: transmission.service.conf.j2
+        dest: /etc/systemd/system/transmission-daemon.service.d/overrides.conf
+
+    - name: Start transmission-daemon service
+      service:
+        name: transmission-daemon
+        state: started
+        enabled: yes
+
+    - name: Register new service
+      template:
+        src: torrent.xml.j2
+        dest: /etc/firewalld/services/torrent.xml
+      notify:
+        - reload firewalld
+
+    - name: Register new service
+      template:
+        src: transmissionweb.xml.j2
+        dest: /etc/firewalld/services/transmissionweb.xml
+      notify:
+        - reload firewalld
+
+    - name: Configure firewall
+      firewalld:
+        service: "{{ item }}"
+        state: enabled
+        permanent: yes
+        immediate: yes
+      with_items:
+        - mdns
+        - mosh
+        - samba
+        - torrent
+        - transmissionweb
+        - syncthing
+
+    - name: Create heartbeat service
+      template:
+        src: heartbeat.service.j2
+        dest: /etc/systemd/system/heartbeat.service
+
+    - name: Create heartbeat timer
+      template:
+        src: heartbeat.timer.j2
+        dest: /etc/systemd/system/heartbeat.timer
+
+    - name: Enable and start heartbeat timer
+      service:
+        name: heartbeat.timer
+        state: started
+        enabled: yes
+
+    - name: Create btrfs scrub service
+      template:
+        src: btrfs-scrub@.service.j2
+        dest: /etc/systemd/system/btrfs-scrub@.service
+
+    - name: Create btrfs scrub timer
+      template:
+        src: btrfs-scrub@.timer.j2
+        dest: /etc/systemd/system/btrfs-scrub@.timer
+
+    - name: Enable and start btrfs scrub timer
+      service:
+        name: btrfs-scrub@mnt-storage.timer
+        state: started
+        enabled: yes
+      when: storagedir.stat.exists
+
+    - name: Ensure group "media" exists
+      group:
+        name: media
+        state: present
+
+    - name: Add transmission to media group
+      user:
+        name: transmission
+        groups: media
+        append: yes
+
+    - name: Start syncthing service
+      service:
+        name: "syncthing@{{ username }}"
+        state: started
+        enabled: yes
+
+    - name: Start tmux on interactive SSH logins
+      blockinfile:
+        path: "/home/{{ username }}/.bashrc"
+        block: |
+          if [ -z "$TMUX" ] && [ -n "$SSH_TTY" ] && [[ $- =~ i ]]; then
+            tmux attach-session -t ssh || tmux new-session -s ssh
+            exit
+          fi
+        validate: /usr/bin/bash -n %s
+
+  handlers:
+    - name: reload firewalld
+      command: firewall-cmd --reload
+
+    - name: reload udev
+      command: "udevadm control --reload-rules"

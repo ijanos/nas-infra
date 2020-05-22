@@ -1,0 +1,22 @@
+[global]
+  workgroup = WORKGROUP
+  disable netbios = yes
+  dns proxy = no
+  map to guest = Bad User
+  logging = systemd
+  use sendfile = yes
+  client min protocol = SMB2_24
+  ; disable printers:
+  load printers = no
+  printing = bsd
+  printcap name = /dev/null
+  disable spoolss = yes
+  show add printer wizard = no
+
+[media]
+  comment = Media
+  path = /mnt/storage/media
+  public = yes
+  read only = yes
+  printable = no
+  guest ok = yes

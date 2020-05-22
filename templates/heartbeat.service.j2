@@ -1,0 +1,12 @@
+[Unit]
+Description=Heartbeat
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+DynamicUser=yes
+ExecStart="/usr/bin/curl --silent --show-error '{{ heartbeat_url }}'"
+
+[Install]
+WantedBy=default.target

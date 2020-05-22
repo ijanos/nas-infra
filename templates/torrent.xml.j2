@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+ <short>transmission</short>
+ <description>Listen port for transmission torrent connections</description>
+ <port protocol="tcp" port="{{ transmission_torrent_port }}" />
+ <port protocol="udp" port="{{ transmission_torrent_port }}" />
+</service>
