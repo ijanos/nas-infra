@@ -2,12 +2,13 @@
 After=NetworkManager-wait-online.service
 After=network.target
 
-RequiresMountsFor=/mnt/storage
-
 [Service]
 Restart=always
 
-PrivateDevices=true
+DevicePolicy=closed
+DeviceAllow=/dev/net/tun
+
+PrivateTmp=true
 ProtectControlGroups=true
 ProtectHome=true
 ProtectKernelTunables=true

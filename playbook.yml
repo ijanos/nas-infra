@@ -4,7 +4,6 @@
   vars_files:
     - vars/secrets.yml
 
-
   pre_tasks:
     - name: Fedora 31 dnf lib requires a recent Ansible
       fail: msg="Ansible version >= 2.10.0 required, please update!"
@@ -101,6 +100,14 @@
         name: avahi-daemon.service
         state: started
         enabled: yes
+
+    - name: Ensures transmission service has an override dir
+      file: path=/etc/systemd/system/zerotier-one.service.d state=directory
+
+    - name: Modify default zerotier service settings
+      template:
+        src: zerotier.service.conf.j2
+        dest: /etc/systemd/system/zerotier-one.service.d/overrides.conf
 
     - name: Start zerotier-one service
       service:

@@ -8,5 +8,14 @@ Type=oneshot
 DynamicUser=yes
 ExecStart="/usr/bin/curl --silent --show-error '{{ heartbeat_url }}'"
 
+DynamicUser=true
+PrivateDevices=true
+ProtectControlGroups=true
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectSystem=full
+RestrictSUIDSGID=true
+NoNewPrivileges=true
+
 [Install]
 WantedBy=default.target
