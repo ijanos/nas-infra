@@ -32,6 +32,7 @@
       dnf:
         name:
           - mcelog # fails to start with this AMD CPU
+          - rng-tools # use haveged instead
           - bluez
           - realmd
           - gtk3
@@ -101,7 +102,7 @@
         state: started
         enabled: yes
 
-    - name: Ensures transmission service has an override dir
+    - name: Ensures zerotier service has an override dir
       file: path=/etc/systemd/system/zerotier-one.service.d state=directory
 
     - name: Modify default zerotier service settings

@@ -1,8 +1,6 @@
 [Unit]
-After=NetworkManager-wait-online.service
-After=network.target
-
-RequiresMountsFor=/mnt/storage
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Restart=always

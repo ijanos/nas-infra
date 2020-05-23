@@ -6,7 +6,7 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 DynamicUser=yes
-ExecStart="/usr/bin/curl --silent --show-error '{{ heartbeat_url }}'"
+ExecStart=/usr/bin/curl --silent --show-error '{{ heartbeat_url }}'
 
 DynamicUser=true
 PrivateDevices=true
