@@ -45,6 +45,7 @@
           - cockpit-networkmanager
           - cockpit-storaged
           - rsyslog
+          - mdadm
           - abrt
           - fprintd
           - unbound-libs
