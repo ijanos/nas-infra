@@ -299,11 +299,32 @@
     - name: Start tmux on interactive SSH logins
       blockinfile:
         path: "/home/{{ username }}/.bashrc"
+        marker: "## {mark} tmux session on SSH"
         block: |
           if [ -z "$TMUX" ] && [ -n "$SSH_TTY" ] && [[ $- =~ i ]]; then
             tmux attach-session -t ssh || tmux new-session -s ssh
             exit
           fi
+        validate: /usr/bin/bash -n %s
+
+    - name: Add environemnt variables
+      blockinfile:
+        path: "/home/{{ username }}/.bashrc"
+        marker: "## {mark} default env vars"
+        block: |
+          export EDITOR=vim
+          export MANWIDTH=80
+        validate: /usr/bin/bash -n %s
+
+    - name: Add bash aliases
+      blockinfile:
+        path: "/home/{{ username }}/.bashrc"
+        marker: "## {mark} custom aliases"
+        block: |
+          alias ll='ls -lhX --group-directories-first'
+          alias ..='cd ..'
+          alias ...='cd ../..'
+          alias ....='cd ../../..'
         validate: /usr/bin/bash -n %s
 
   handlers:
