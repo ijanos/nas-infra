@@ -2,8 +2,8 @@
 Description=Heartbeat
 
 [Timer]
-OnCalendar=*:0/12
-Persistent=true
+OnActiveSec=0
+OnUnitActiveSec=14m
 
 [Install]
 WantedBy=timers.target
