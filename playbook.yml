@@ -1,6 +1,8 @@
 ---
 - hosts: all
   become: true
+  vars:
+    storage: /mnt/storage
   vars_files:
     - vars/secrets.yml
 
@@ -152,7 +154,7 @@
         dest: /etc/modules-load.d/hp-n54l.conf
 
     - stat:
-        path: "/mnt/storage"
+        path: "{{ storage }}"
         get_checksum: no
       register: storagedir
 
@@ -327,6 +329,9 @@
           alias ...='cd ../..'
           alias ....='cd ../../..'
         validate: /usr/bin/bash -n %s
+
+    - name: Install Dropbox
+      include: tasks/dropbox.yml
 
   handlers:
     - name: reload firewalld

@@ -1,0 +1,47 @@
+---
+- name: Create a directory for dropbox
+  file:
+    path: "{{ storage }}/dropbox"
+    state: directory
+    mode: '0755'
+
+- name: Install dependencies
+  dnf:
+    name:
+      - mesa-libglapi
+      - libXext
+      - libXdamage
+      - libxshmfence
+      - libXxf86vm
+
+- name: Install dropbox
+  shell: curl -L "https://www.dropbox.com/download?plat=lnx.x86_64" | tar -C "{{storage }}/dropbox" -xzf -
+  args:
+    creates: "{{  storage }}/dropbox/.dropbox-dist/dropboxd"
+
+- name:  Download Dropbox control script
+  get_url: dest="{{ storage }}/dropbox/dropbox.py" url=https://www.dropbox.com/download?dl=packages/dropbox.py mode=0755
+
+- name: Add Dropbox control script
+  template:
+    src: dropbox-cli.j2
+    dest: /usr/local/bin/dropbox-cli
+    owner: root
+    group: root
+    mode: u=rwx,g=rx,o=rx
+
+- name: Update inotify settings for dropbox
+  sysctl:
+    name: fs.inotify.max_user_watches
+    value: '100000'
+    state: present
+
+- name: Create dropbox service
+  template:
+    src: dropboxd.service.j2
+    dest: /etc/systemd/system/dropboxd.service
+
+# first time run manually to and use the generated link to login
+# env HOME=/mnt/storage/dropbox .dropbox-dist/dropboxd
+# systemctl enable dropboxd.service
+# systemctl start dropboxd.service

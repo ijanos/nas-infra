@@ -1,0 +1,23 @@
+ [Unit]
+Description=Dropbox daemon headless
+After=local-fs.target network.target
+
+[Service]
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=dropbox
+Environment="HOME={{ storage }}/dropbox"
+ExecStart=/bin/sh -c "{{ storage }}/dropbox/.dropbox-dist/dropboxd"
+Restart=on-failure
+RestartSec=3
+User={{ username }}
+Group={{ username }}
+PrivateTmp=true
+ProtectHome=read-only
+ProtectSystem=full
+ReadWritePaths={{ storage }}/dropbox
+PrivateDevices=true
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=default.target
