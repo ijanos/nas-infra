@@ -1,0 +1,10 @@
+---
+- name: Install hdsentinel
+  shell: set -o pipefail && curl -L "https://www.hdsentinel.com/hdslin/hdsentinel-018c-x64.gz" | gunzip > /usr/local/bin/hdsentinel
+  args:
+    creates: "/usr/local/bin/hdsentinel"
+
+- name: Make hdsentinel executable
+  file:
+    path: /usr/local/bin/hdsentinel
+    mode: u=rwx,g=rx,o=rx

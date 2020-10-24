@@ -333,6 +333,9 @@
     - name: Install Dropbox
       include: tasks/dropbox.yml
 
+    - name: Install HDsentinel
+      include: tasks/hdsentinel.yml
+
   handlers:
     - name: reload firewalld
       command: firewall-cmd --reload
