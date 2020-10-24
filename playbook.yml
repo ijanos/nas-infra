@@ -236,7 +236,7 @@
         - reload firewalld
 
     - name: Configure firewall
-      firewalld:
+      ansible.posix.firewalld:
         service: "{{ item }}"
         state: enabled
         permanent: yes
