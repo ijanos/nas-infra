@@ -15,9 +15,9 @@
       - libXxf86vm
 
 - name: Install dropbox
-  shell: curl -L "https://www.dropbox.com/download?plat=lnx.x86_64" | tar -C "{{storage }}/dropbox" -xzf -
+  shell: set -o pipefail && curl -L "https://www.dropbox.com/download?plat=lnx.x86_64" | tar -C "{{storage }}/dropbox" -xzf -
   args:
-    creates: "{{  storage }}/dropbox/.dropbox-dist/dropboxd"
+    creates: "{{ storage }}/dropbox/.dropbox-dist/dropboxd"
 
 - name:  Download Dropbox control script
   get_url: dest="{{ storage }}/dropbox/dropbox.py" url=https://www.dropbox.com/download?dl=packages/dropbox.py mode=0755
