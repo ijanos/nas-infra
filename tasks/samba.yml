@@ -1,0 +1,18 @@
+---
+- name: Add a sambda server config file
+  template:
+    src: smb.conf.j2
+    dest: /etc/samba/smb.conf
+    validate: 'testparm -s %s'
+
+- name: Enable samba to read system directories
+  seboolean:
+    name: samba_export_all_ro
+    state: yes
+    persistent: yes
+
+- name: Start samba service
+  service:
+    name: smb
+    state: started
+    enabled: yes

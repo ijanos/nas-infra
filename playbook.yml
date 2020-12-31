@@ -183,23 +183,7 @@
         - { regexp: '^#?PubkeyAuthentication', line: 'PubkeyAuthentication yes'}
       when: authorized_keys.stat.exists
 
-    - name: Add a sambda server config file
-      template:
-        src: smb.conf.j2
-        dest: /etc/samba/smb.conf
-        validate: 'testparm -s %s'
 
-    - name: Enable samba to read system directories
-      seboolean:
-        name: samba_export_all_ro
-        state: yes
-        persistent: yes
-
-    - name: Start samba service
-      service:
-        name: smb
-        state: started
-        enabled: yes
 
     - name: Start haveged service
       service:
@@ -335,6 +319,9 @@
 
     - name: Install HDsentinel
       include: tasks/hdsentinel.yml
+
+    - name: Setup samba
+      include: tasks/samba.yml
 
   handlers:
     - name: reload firewalld
