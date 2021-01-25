@@ -233,6 +233,15 @@
         - transmissionweb
         - syncthing
 
+    - name: Configure firewall
+      ansible.posix.firewalld:
+        service: "{{ item }}"
+        state: disabled
+        permanent: yes
+        immediate: yes
+      with_items:
+        - cockpit
+
     - name: Create heartbeat service
       template:
         src: heartbeat.service.j2
