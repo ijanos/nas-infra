@@ -78,6 +78,7 @@
           - python3-networkmanager # for ansible nmcli module
           - python3-libsemanage # ansible semanage
           - vim
+          - fd-find
           - tmux
           - lm_sensors
           - hdparm
