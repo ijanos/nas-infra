@@ -15,7 +15,7 @@
       - libXxf86vm
 
 - name: Install dropbox
-  shell: set -o pipefail && curl -L "https://www.dropbox.com/download?plat=lnx.x86_64" | tar -C "{{storage }}/dropbox" -xzf -
+  shell: set -o pipefail && curl -L "https://www.dropbox.com/download?plat=lnx.x86_64" | tar -C "{{  storage }}/dropbox" -xzf -
   args:
     creates: "{{ storage }}/dropbox/.dropbox-dist/dropboxd"
 
@@ -24,7 +24,7 @@
 
 - name: Add Dropbox control script
   template:
-    src: dropbox-cli.j2
+    src: dropbox/dropbox-cli.j2
     dest: /usr/local/bin/dropbox-cli
     owner: root
     group: root
@@ -38,8 +38,11 @@
 
 - name: Create dropbox service
   template:
-    src: dropboxd.service.j2
+    src: dropbox/dropboxd.service.j2
     dest: /etc/systemd/system/dropboxd.service
+    owner: root
+    group: root
+    mode: "u=rw,g=r,o=r"
 
 # first time run manually to and use the generated link to login
 # env HOME=/mnt/storage/dropbox .dropbox-dist/dropboxd
