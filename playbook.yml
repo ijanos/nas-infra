@@ -333,6 +333,9 @@
     - name: Setup samba
       include: tasks/samba.yml
 
+    - name: System hardening tasks
+      include: tasks/harden.yml
+
   handlers:
     - name: reload firewalld
       command: firewall-cmd --reload

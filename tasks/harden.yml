@@ -1,0 +1,53 @@
+---
+- name: Disable ptrace completely
+  sysctl:
+    name: kernel.yama.ptrace_scope
+    value: "3"
+    state: present
+
+- name: Disable KEXEC
+  sysctl:
+    name: kernel.kexec_load_disabled
+    value: "1"
+    state: present
+
+- name: Hide kernel pointers in /proc
+  sysctl:
+    name: kernel.kptr_restrict
+    value: "2"
+    state: present
+
+- name: Don't allow users to read dmesg
+  sysctl:
+    name: kernel.dmesg_restrict
+    value: "1"
+    state: present
+
+- name: Disable unprivileged bpf
+  sysctl:
+    name: kernel.unprivileged_bpf_disabled
+    value: "1"
+    state: present
+
+- name: Harden bpf jit
+  sysctl:
+    name: net.core.bpf_jit_harden
+    value: "2"
+    state: present
+
+- name: Disable user namespaces
+  sysctl:
+    name: user.max_user_namespaces
+    value: "0"
+    state: present
+
+- name: Ensures coredump.conf.d dir exists
+  file: path=/etc/systemd/coredump.conf.d state=directory
+
+- name: Disable core dumps
+  template:
+    src: harden/disable-coredump.conf.j2
+    dest: /etc/systemd/coredump.conf.d/custom.conf
+    owner: root
+    group: root
+    mode: "u=rw,g=r,o=r"
