@@ -85,7 +85,6 @@
           - mosh
           - transmission-daemon
           - nss-mdns
-          - avahi
           - glances
           - python3-bottle
           - samba
@@ -97,12 +96,6 @@
     - name: Enable and start fstrim.timer
       service:
         name: fstrim.timer
-        state: started
-        enabled: yes
-
-    - name: Enable avahi service
-      service:
-        name: avahi-daemon.service
         state: started
         enabled: yes
 
@@ -126,12 +119,6 @@
       command: zerotier-cli join {{ zerotier_network_id }}
       args:
         creates: /var/lib/zerotier-one/networks.d/{{ zerotier_network_id }}.conf
-
-    - name: Enable avahi name resolution
-      lineinfile:
-        path: /etc/nsswitch.conf
-        regexp: '^hosts:'
-        line: "hosts: files mdns4_minimal [NOTFOUND=return] dns myhostname"
 
     - name: Set swappiness
       sysctl:
@@ -227,7 +214,6 @@
         permanent: yes
         immediate: yes
       with_items:
-        - mdns
         - mosh
         - samba
         - torrent
@@ -323,6 +309,10 @@
           alias ...='cd ../..'
           alias ....='cd ../../..'
         validate: /usr/bin/bash -n %s
+
+# Skip avahi for now
+    # - name: Setup avahi
+    #   include: tasks/avahi.yml
 
     - name: Install Dropbox
       include: tasks/dropbox.yml
