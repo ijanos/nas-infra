@@ -8,8 +8,8 @@ StartLimitIntervalSec=60
 
 [Service]
 DynamicUser=yes
-ExecStart=/usr/bin/curl --silent --show-error '{{ heartbeat_url }}'
-RuntimeMaxSec=3
+ExecStart=/usr/bin/curl --max-time 10 --retry 5 --silent --show-error '{{ heartbeat_url }}'
+RuntimeMaxSec=60
 
 Restart=on-failure
 DynamicUser=true
