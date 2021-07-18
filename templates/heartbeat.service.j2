@@ -2,16 +2,13 @@
 Description=Heartbeat
 After=network-online.target
 Wants=network-online.target
-StartLimitBurst=2
-StartLimitIntervalSec=60
-
 
 [Service]
 DynamicUser=yes
 ExecStart=/usr/bin/curl --max-time 10 --retry 5 --silent --show-error '{{ heartbeat_url }}'
 RuntimeMaxSec=60
 
-Restart=on-failure
+Restart=no
 DynamicUser=true
 PrivateDevices=true
 ProtectControlGroups=true
