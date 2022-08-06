@@ -5,11 +5,11 @@ Wants=network-online.target
 
 [Service]
 DynamicUser=yes
-ExecStart=/usr/bin/curl --max-time 10 --retry 5 --silent --show-error '{{ heartbeat_url }}'
-RuntimeMaxSec=60
+ExecStart=/usr/bin/curl -fsS -m 10 --retry 5 -o /dev/null '{{ heartbeat_url }}'
+
+RuntimeMaxSec=15
 
 Restart=no
-DynamicUser=true
 PrivateDevices=true
 ProtectControlGroups=true
 ProtectHome=true
