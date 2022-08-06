@@ -79,6 +79,7 @@
           - python3-libsemanage # ansible semanage
           - vim
           - fd-find
+          - ripgrep
           - tmux
           - lm_sensors
           - hdparm
