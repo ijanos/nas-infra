@@ -64,4 +64,4 @@
     domain: "*"
     limit_type: hard
     limit_item: nproc
-    value: "128"
+    value: "512"
